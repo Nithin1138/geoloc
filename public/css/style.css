@@ -815,9 +815,9 @@ body::before {
 /* ─── Pricing Cards ────────────────────────────────────────── */
 .pricing-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 2x2 grid on desktop to double card width */
-  gap: 2rem;
-  max-width: 1000px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  max-width: 1400px;
   margin: 0 auto;
   align-items: stretch;
 }
@@ -1369,6 +1369,14 @@ body::before {
 }
 
 /* ─── Responsive ───────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .pricing-grid {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 720px;
+    margin: 0 auto;
+  }
+}
+
 @media (max-width: 768px) {
   .nav-links {
     display: none;
