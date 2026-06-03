@@ -4,10 +4,8 @@
   "description": "Self-hosted IP Geolocation API using MaxMind GeoLite2 — zero external API cost",
   "main": "src/index.js",
   "scripts": {
-    "build": "node scripts/download-db.js && npm start",
-    "start": "node src/index.js",
-    "dev": "node --watch src/index.js",
-    "download-db": "node scripts/download-db.js"
+    "build": "node scripts/download-db.js",
+    "start": "node src/index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
