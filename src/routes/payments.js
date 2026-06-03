@@ -145,9 +145,22 @@ router.post("/verify", async (req, res) => {
     });
   }
 
-  // Signature valid — create API key
+  // Signature valid — check for existing active key on this plan first
+  const { getKeyByEmail } = require("../middleware/auth");
+  const existingKeyRecord = await getKeyByEmail(email, plan || "starter");
+
+  if (existingKeyRecord) {
+    console.log(`✅ Existing active key returned for ${email} (${plan || "starter"})`);
+    return res.json({
+      success: true,
+      apiKey: existingKeyRecord.key,
+      plan: existingKeyRecord.plan,
+      message: "An active key already exists for your email. Here is your key.",
+    });
+  }
+
   try {
-    const result = createKey(plan || "starter", {
+    const result = await createKey(plan || "starter", {
       email,
       paymentId: razorpay_payment_id,
       orderId: razorpay_order_id,

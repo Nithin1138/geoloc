@@ -22,6 +22,7 @@ const helmet = require("helmet");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
 const { loadDatabases, getDbStatus } = require("./geo");
+const { connectDB } = require("./db");
 const { initTransporter } = require("./services/email");
 const ipRouter = require("./routes/ip");
 const keysRouter = require("./routes/keys");
@@ -149,6 +150,9 @@ app.use((err, req, res, next) => {
 async function start() {
   try {
     await loadDatabases();
+
+    // Connect MongoDB database
+    connectDB();
 
     // Initialize email transporter
     initTransporter();

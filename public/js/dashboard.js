@@ -31,12 +31,14 @@ let refreshInterval = null;
 // ─── Login ───────────────────────────────────────────────────
 async function login() {
   const input = document.getElementById('loginKeyInput');
-  const key = input.value.trim();
+  const value = input.value.trim();
   const errorEl = document.getElementById('loginError');
   const btn = document.getElementById('loginBtn');
+  const emailKeysList = document.getElementById('emailKeysList');
+  const keysContainer = document.getElementById('keysContainer');
 
-  if (!key) {
-    errorEl.textContent = 'Please enter your API key';
+  if (!value) {
+    errorEl.textContent = 'Please enter your Email or API Key';
     errorEl.style.display = 'block';
     return;
   }
@@ -44,32 +46,100 @@ async function login() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Verifying...';
   errorEl.style.display = 'none';
+  emailKeysList.style.display = 'none';
+  keysContainer.innerHTML = '';
 
-  try {
-    const res = await fetch('/keys/stats', {
-      headers: { 'X-Api-Key': key }
-    });
-    const data = await res.json();
+  const isEmail = value.includes('@');
 
-    if (!data.success) {
-      errorEl.textContent = data.error || 'Invalid API key';
+  if (isEmail) {
+    try {
+      const res = await fetch(`/keys/list?email=${encodeURIComponent(value)}`);
+      const data = await res.json();
+
+      if (!data.success || !data.keys || data.keys.length === 0) {
+        errorEl.textContent = 'No API keys found for this email address.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      // Display matching keys
+      emailKeysList.style.display = 'block';
+      data.keys.forEach(keyRecord => {
+        const keyItem = document.createElement('div');
+        keyItem.style.background = 'rgba(255,255,255,0.04)';
+        keyItem.style.border = '1px solid var(--border-primary)';
+        keyItem.style.borderRadius = '8px';
+        keyItem.style.padding = '10px 14px';
+        keyItem.style.cursor = 'pointer';
+        keyItem.style.display = 'flex';
+        keyItem.style.justifyContent = 'space-between';
+        keyItem.style.alignItems = 'center';
+        keyItem.style.transition = 'background 0.2s';
+        
+        keyItem.onmouseover = () => keyItem.style.background = 'rgba(255,255,255,0.08)';
+        keyItem.onmouseout = () => keyItem.style.background = 'rgba(255,255,255,0.04)';
+        
+        const planBadge = keyRecord.plan.toUpperCase();
+        
+        keyItem.innerHTML = `
+          <div>
+            <div style="font-weight:600; font-size:0.85rem; color:var(--text-primary); font-family:var(--font-mono)">${keyRecord.key.substring(0, 12)}...</div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">Plan: ${planBadge} | Usage: ${keyRecord.usage.today}/${keyRecord.limits.perDay}</div>
+          </div>
+          <span class="btn btn-sm btn-outline" style="padding:4px 8px; border-radius:6px; font-size:0.75rem;">Select</span>
+        `;
+        
+        keyItem.onclick = () => {
+          currentKey = keyRecord.key;
+          sessionStorage.setItem('geoip_api_key', keyRecord.key);
+          
+          // Re-fetch stats using requireApiKey to get complete stats detail object
+          fetch('/keys/stats', { headers: { 'X-Api-Key': keyRecord.key } })
+            .then(r => r.json())
+            .then(response => {
+              if (response.success) {
+                showDashboard(response.data);
+              } else {
+                errorEl.textContent = 'Failed to load key stats';
+                errorEl.style.display = 'block';
+              }
+            });
+        };
+        keysContainer.appendChild(keyItem);
+      });
+
+    } catch (err) {
+      errorEl.textContent = 'Network error — try again';
       errorEl.style.display = 'block';
+    } finally {
       btn.disabled = false;
-      btn.textContent = 'View Dashboard';
-      return;
+      btn.textContent = 'Access Dashboard';
     }
+  } else {
+    // Treat as direct API key verification
+    try {
+      const res = await fetch('/keys/stats', {
+        headers: { 'X-Api-Key': value }
+      });
+      const data = await res.json();
 
-    // Store and show dashboard
-    currentKey = key;
-    sessionStorage.setItem('geoip_api_key', key);
-    showDashboard(data.data);
+      if (!data.success) {
+        errorEl.textContent = data.error || 'Invalid API key';
+        errorEl.style.display = 'block';
+        return;
+      }
 
-  } catch (err) {
-    errorEl.textContent = 'Network error — try again';
-    errorEl.style.display = 'block';
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'View Dashboard';
+      currentKey = value;
+      sessionStorage.setItem('geoip_api_key', value);
+      showDashboard(data.data);
+
+    } catch (err) {
+      errorEl.textContent = 'Network error — try again';
+      errorEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Access Dashboard';
+    }
   }
 }
 
@@ -213,6 +283,12 @@ function logout() {
   document.getElementById('dashContainer').classList.remove('active');
   document.getElementById('navLogout').style.display = 'none';
   document.getElementById('loginKeyInput').value = '';
+  
+  // Reset the email key selector container
+  const emailKeysList = document.getElementById('emailKeysList');
+  const keysContainer = document.getElementById('keysContainer');
+  if (emailKeysList) emailKeysList.style.display = 'none';
+  if (keysContainer) keysContainer.innerHTML = '';
 }
 
 // ─── Toast ───────────────────────────────────────────────────

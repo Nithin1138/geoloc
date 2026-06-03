@@ -38,11 +38,18 @@
     <h2>
       <svg class="icon-svg" style="width:24px; height:24px; margin-right:6px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Dashboard Login
     </h2>
-    <p>Enter your API key to view your usage stats and account info.</p>
-    <input type="text" id="loginKeyInput" placeholder="geo_free_abc123... or test_free_geo123"
-           autocomplete="off" spellcheck="false">
-    <button class="btn btn-primary" id="loginBtn" onclick="login()">View Dashboard</button>
+    <p>Enter your Email address or API key to access your dashboard.</p>
+    <input type="text" id="loginKeyInput" placeholder="Enter your Email or API Key"
+           autocomplete="on" spellcheck="false">
+    <button class="btn btn-primary" id="loginBtn" onclick="login()">Access Dashboard</button>
     <div class="error-msg" id="loginError"></div>
+    
+    <!-- Keys Selection List Container -->
+    <div id="emailKeysList" style="display:none; margin-top:1.5rem; text-align:left;">
+      <h3 style="font-size:0.9rem; margin-bottom:0.75rem; color:var(--text-primary)">Your API Keys:</h3>
+      <div id="keysContainer" style="display:flex; flex-direction:column; gap:0.5rem; max-height:200px; overflow-y:auto; padding-right:5px;"></div>
+    </div>
+
     <p style="margin-top:1.5rem; font-size:0.8rem; color:var(--text-tertiary);">
       Don't have a key? <a href="/pricing.html">Get one free →</a>
     </p>

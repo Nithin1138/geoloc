@@ -83,16 +83,25 @@ router.post("/razorpay", express.raw({ type: "application/json" }), async (req, 
     }
 
     // Also check if key was already created via client-side verify
-    const existingKey = getKeyByPaymentId(paymentId);
+    const existingKey = await getKeyByPaymentId(paymentId);
     if (existingKey) {
       console.log(`ℹ️ Key already exists for payment ${paymentId}`);
       processedPayments.add(paymentId);
       return res.status(200).json({ status: "ok", action: "key_exists" });
     }
 
+    // Prevent duplicate key generation for the same email and plan
+    const { getKeyByEmail } = require("../middleware/auth");
+    const existingEmailPlanKey = await getKeyByEmail(email, plan);
+    if (existingEmailPlanKey) {
+      console.log(`ℹ️ Key already exists for email ${email} on plan ${plan}`);
+      processedPayments.add(paymentId);
+      return res.status(200).json({ status: "ok", action: "key_exists" });
+    }
+
     // Create API key
     try {
-      const result = createKey(plan, {
+      const result = await createKey(plan, {
         email,
         paymentId,
         orderId,

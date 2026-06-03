@@ -19,7 +19,7 @@ const { createKey, getKeyStats, PLANS, requireApiKey } = require("../middleware/
  *   - Paid: verify Razorpay/Stripe payment_id first
  *     e.g. await razorpay.payments.fetch(payment_id)
  */
-router.post("/new", express.json(), express.urlencoded({ extended: true }), (req, res) => {
+router.post("/new", express.json(), express.urlencoded({ extended: true }), async (req, res) => {
   const plan = (req.query.plan || "free").toLowerCase();
   const email = (req.body?.email || req.query?.email || req.body?.emailFree || req.query?.emailFree || "").trim().toLowerCase();
 
@@ -48,7 +48,7 @@ router.post("/new", express.json(), express.urlencoded({ extended: true }), (req
 
   // Check if a free key already exists for this email
   const { getKeyByEmail } = require("../middleware/auth");
-  const existingKeyRecord = getKeyByEmail(email, "free");
+  const existingKeyRecord = await getKeyByEmail(email, "free");
   if (existingKeyRecord) {
     return res.status(200).json({
       success: true,
@@ -69,7 +69,7 @@ router.post("/new", express.json(), express.urlencoded({ extended: true }), (req
   }
 
   try {
-    const result = createKey(plan, { email });
+    const result = await createKey(plan, { email });
     return res.status(201).json({
       success: true,
       message: "🎉 API key created! Save this — it won't be shown again.",
@@ -92,11 +92,49 @@ router.post("/new", express.json(), express.urlencoded({ extended: true }), (req
 });
 
 /**
+ * GET /keys/list
+ * List all keys registered to a specific email address
+ */
+router.get("/list", async (req, res) => {
+  const email = (req.query.email || "").trim().toLowerCase();
+
+  if (!email || !email.includes("@")) {
+    return res.status(400).json({
+      success: false,
+      error: "A valid email is required to list keys.",
+    });
+  }
+
+  const { getKeyStats } = require("../middleware/auth");
+  const { ApiKey } = require("../db");
+  
+  try {
+    let keys = [];
+    const records = await ApiKey.find({ email });
+    for (const record of records) {
+      const stats = await getKeyStats(record.key);
+      keys.push({
+        key: record.key,
+        plan: record.plan,
+        active: record.active,
+        created: record.created,
+        usage: stats?.usage || { today: 0, thisMonth: 0, allTime: 0 },
+        limits: stats?.limits || { perDay: 0, perMonth: 0 }
+      });
+    }
+    
+    return res.json({ success: true, keys });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
  * GET /keys/stats
  * View usage stats for the authenticated key
  */
-router.get("/stats", requireApiKey, (req, res) => {
-  const stats = getKeyStats(req.apiKey.key);
+router.get("/stats", requireApiKey, async (req, res) => {
+  const stats = await getKeyStats(req.apiKey.key);
   return res.json({ success: true, data: stats });
 });
 

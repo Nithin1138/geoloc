@@ -51,98 +51,78 @@ const PLANS = {
     priceINR: 9999,
     priceUSD: 120,
     requestsPerDay: 1000000,
-    requestsPerMonth: 30000000,
-    features: ["all pro features", "SLA", "priority support", "dedicated infra"],
     rateLimit: "1,000,000 req/day",
   },
 };
 
-// ─── FILE PERSISTENCE ─────────────────────────────────────────
-const KEYS_FILE = path.join(__dirname, "..", "data", "keys.json");
-const keyStore = new Map();
+// ─── FILE PERSISTENCE (DEPRECATED FOR MONGODB) ─────────────────
+const { ApiKey } = require("../db");
 
-function saveKeys() {
-  try {
-    const data = JSON.stringify(Array.from(keyStore.entries()), null, 2);
-    const dir = path.dirname(KEYS_FILE);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(KEYS_FILE, data, "utf8");
-  } catch (err) {
-    console.error("❌ Failed to save keys:", err.message);
-  }
-}
-
-function loadKeys() {
+// Load local keys.json database values into MongoDB (migration helper)
+async function migrateJSONtoMongo() {
+  const KEYS_FILE = path.join(__dirname, "..", "data", "keys.json");
   try {
     if (fs.existsSync(KEYS_FILE)) {
       const data = fs.readFileSync(KEYS_FILE, "utf8");
       const entries = JSON.parse(data);
-      keyStore.clear();
+      console.log(`📦 Found ${entries.length} keys in keys.json — checking migration...`);
       for (const [key, record] of entries) {
-        keyStore.set(key, record);
+        const exists = await ApiKey.findOne({ key });
+        if (!exists) {
+          await ApiKey.create({
+            key: record.key,
+            plan: record.plan,
+            active: record.active || true,
+            created: record.created || new Date(),
+            todayCount: record.todayCount || 0,
+            monthCount: record.monthCount || 0,
+            totalCount: record.totalCount || 0,
+            lastReset: record.lastReset || new Date().toDateString(),
+            lastUsed: record.lastUsed || null,
+            email: record.email || null,
+            paymentId: record.paymentId || null,
+            orderId: record.orderId || null,
+            source: record.source || "migration"
+          });
+        }
       }
-    } else {
-      seedDefaultKeys();
-      saveKeys();
+      console.log("✅ JSON Migration complete");
     }
   } catch (err) {
-    console.error("❌ Failed to load keys:", err.message);
-    seedDefaultKeys();
+    console.error("❌ Failed to migrate JSON keys to MongoDB:", err.message);
   }
 }
 
-function seedDefaultKeys() {
-  keyStore.clear();
-  [
-    { key: "test_free_geo123",    plan: "free"       },
-    { key: "test_starter_geo456", plan: "starter"    },
-    { key: "test_pro_geo789",     plan: "pro"        },
-  ].forEach(({ key, plan }) => {
-    keyStore.set(key, {
-      key,
-      plan,
-      active: true,
-      created: new Date().toISOString(),
-      todayCount: 0,
-      monthCount: 0,
-      totalCount: 0,
-      lastReset: new Date().toDateString(),
-      lastUsed: null,
-    });
-  });
-}
-
-// Initial load on startup
-loadKeys();
-
+// Trigger migrations asynchronously
+setTimeout(migrateJSONtoMongo, 2000);
 
 // ─── KEY MANAGEMENT ──────────────────────────────────────────
-function createKey(plan = "free", metadata = {}) {
+async function createKey(plan = "free", metadata = {}) {
   if (!PLANS[plan]) throw new Error(`Unknown plan: ${plan}`);
   const key = `geo_${plan}_${uuidv4().replace(/-/g, "").substring(0, 20)}`;
-  const record = {
+  
+  const record = await ApiKey.create({
     key,
     plan,
     active: true,
-    created: new Date().toISOString(),
+    created: new Date(),
     todayCount: 0,
     monthCount: 0,
     totalCount: 0,
     lastReset: new Date().toDateString(),
     lastUsed: null,
     ...metadata,
-  };
-  keyStore.set(key, record);
-  saveKeys();
-  return { key, plan, limits: PLANS[plan] };
+  });
+
+  return { key: record.key, plan: record.plan, limits: PLANS[record.plan] };
 }
 
-function getKey(key) {
-  return keyStore.get(key) || null;
+async function getKey(key) {
+  return await ApiKey.findOne({ key });
 }
 
-function getKeyStats(key) {
-  const record = keyStore.get(key);
+async function getKeyStats(key) {
+  const record = await ApiKey.findOne({ key });
   if (!record) return null;
   const plan = PLANS[record.plan];
   return {
@@ -167,11 +147,10 @@ function getKeyStats(key) {
 }
 
 // ─── USAGE TRACKING ──────────────────────────────────────────
-function checkAndTrack(key, skipTrack = false) {
-  const record = keyStore.get(key);
+async function checkAndTrack(key, skipTrack = false) {
+  const record = await ApiKey.findOne({ key });
   if (!record) return { allowed: false, reason: "Invalid API key" };
   if (!record.active) return { allowed: false, reason: "API key is disabled" };
-
 
   const plan = PLANS[record.plan];
   const today = new Date().toDateString();
@@ -201,15 +180,12 @@ function checkAndTrack(key, skipTrack = false) {
   }
 
   if (!skipTrack) {
-    // Track usage
     record.todayCount++;
     record.monthCount++;
     record.totalCount++;
-    record.lastUsed = new Date().toISOString();
-
-    saveKeys();
+    record.lastUsed = new Date();
+    await record.save();
   }
-
 
   const remaining = {
     today: plan.requestsPerDay - record.todayCount,
@@ -220,7 +196,7 @@ function checkAndTrack(key, skipTrack = false) {
 }
 
 // ─── MIDDLEWARE ───────────────────────────────────────────────
-function requireApiKey(req, res, next) {
+async function requireApiKey(req, res, next) {
   const key =
     req.headers["x-api-key"] ||
     req.headers["authorization"]?.replace(/^Bearer\s+/i, "") ||
@@ -235,7 +211,7 @@ function requireApiKey(req, res, next) {
     });
   }
 
-  const record = getKey(key);
+  const record = await getKey(key);
   if (!record) {
     return res.status(401).json({
       success: false,
@@ -245,7 +221,7 @@ function requireApiKey(req, res, next) {
   }
 
   const skipTrack = req.originalUrl?.includes("/keys/stats") || false;
-  const usage = checkAndTrack(key, skipTrack);
+  const usage = await checkAndTrack(key, skipTrack);
   if (!usage.allowed) {
     return res.status(429).json({
       success: false,
@@ -256,12 +232,10 @@ function requireApiKey(req, res, next) {
     });
   }
 
-  // Attach to request
   req.apiKey = record;
   req.plan = usage.plan;
   req.usage = usage;
 
-  // Rate limit headers (industry standard — like Stripe/Twilio)
   const plan = PLANS[usage.plan];
   res.setHeader("X-RateLimit-Limit-Day",       plan.requestsPerDay);
   res.setHeader("X-RateLimit-Remaining-Day",   usage.remaining.today);
@@ -272,9 +246,6 @@ function requireApiKey(req, res, next) {
   next();
 }
 
-/**
- * Plan-gate middleware — restricts endpoint to certain plans
- */
 function requirePlan(...allowedPlans) {
   return (req, res, next) => {
     if (!allowedPlans.includes(req.plan)) {
@@ -289,29 +260,17 @@ function requirePlan(...allowedPlans) {
   };
 }
 
-/**
- * Find a key record by payment ID (for idempotency in webhooks)
- */
-function getKeyByPaymentId(paymentId) {
+async function getKeyByPaymentId(paymentId) {
   if (!paymentId) return null;
-  for (const [, record] of keyStore) {
-    if (record.paymentId === paymentId) return record;
-  }
-  return null;
+  return await ApiKey.findOne({ paymentId });
 }
 
-/**
- * Find a key record by email and plan (to prevent duplicate free keys)
- */
-function getKeyByEmail(email, plan) {
+async function getKeyByEmail(email, plan) {
   if (!email) return null;
   const targetEmail = email.trim().toLowerCase();
-  for (const [, record] of keyStore) {
-    if (record.email?.trim().toLowerCase() === targetEmail && record.plan === plan) {
-      return record;
-    }
-  }
-  return null;
+  return await ApiKey.findOne({ email: targetEmail, plan });
 }
 
 module.exports = { requireApiKey, requirePlan, createKey, getKey, getKeyStats, getKeyByPaymentId, getKeyByEmail, PLANS };
+
+
