@@ -815,9 +815,9 @@ body::before {
 /* ─── Pricing Cards ────────────────────────────────────────── */
 .pricing-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.75rem;
-  max-width: 1200px;
+  grid-template-columns: repeat(2, 1fr); /* 2x2 grid on desktop to double card width */
+  gap: 2rem;
+  max-width: 1000px;
   margin: 0 auto;
   align-items: stretch;
 }
