@@ -22,16 +22,37 @@ const helmet = require("helmet");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
 const { loadDatabases, getDbStatus } = require("./geo");
+const { initTransporter } = require("./services/email");
 const ipRouter = require("./routes/ip");
 const keysRouter = require("./routes/keys");
+const paymentsRouter = require("./routes/payments");
+const webhooksRouter = require("./routes/webhooks");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ─── SECURITY MIDDLEWARE ──────────────────────────────────────
-app.use(helmet());
+// Disable Helmet temporarily to diagnose browser stylesheet blocking
+// app.use(helmet({
+//   contentSecurityPolicy: {
+//     directives: {
+//       defaultSrc: ["'self'"],
+//       scriptSrc: ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com"],
+//       frameSrc: ["'self'", "https://api.razorpay.com", "https://checkout.razorpay.com"],
+//       connectSrc: ["'self'", "https://lumberjack.razorpay.com", "https://api.razorpay.com"],
+//       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+//       fontSrc: ["'self'", "https://fonts.gstatic.com"],
+//       imgSrc: ["'self'", "data:", "https:"],
+//     },
+//   },
+//   crossOriginEmbedderPolicy: false,
+//   crossOriginResourcePolicy: { policy: "cross-origin" },
+// }));
 app.use(cors({ origin: "*" }));
 app.use(express.json({ limit: "100kb" }));
+
+// ─── STATIC FILES (Landing page, Pricing, Dashboard) ─────────
+app.use(express.static(path.join(__dirname, "..", "public")));
 
 // Global IP-level rate limit (brute force protection, BEFORE key auth)
 app.use(
@@ -45,7 +66,9 @@ app.use(
 );
 
 // ─── PUBLIC ROUTES ────────────────────────────────────────────
-app.get("/", (req, res) => {
+
+// API info endpoint (moved from / to /api so landing page can be served)
+app.get("/api", (req, res) => {
   res.json({
     name: "IP Geolocation API",
     version: "1.0.0",
@@ -97,17 +120,24 @@ app.get("/status", (req, res) => {
   });
 });
 
-// ─── PROTECTED ROUTES ─────────────────────────────────────────
+// ─── PROTECTED & PAYMENT ROUTES ──────────────────────────────
 app.use("/api/ip", ipRouter);
 app.use("/keys", keysRouter);
+app.use("/payments", paymentsRouter);
+app.use("/webhooks", webhooksRouter);
 
 // ─── 404 & ERROR HANDLERS ─────────────────────────────────────
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: `${req.method} ${req.path} not found`,
-    hint: "GET / for all available endpoints",
-  });
+  // Only return JSON 404 for API-like paths
+  if (req.path.startsWith("/api/") || req.path.startsWith("/keys/") || req.path.startsWith("/payments/") || req.path.startsWith("/webhooks/")) {
+    return res.status(404).json({
+      success: false,
+      error: `${req.method} ${req.path} not found`,
+      hint: "GET /api for all available endpoints",
+    });
+  }
+  // For other paths, serve the landing page (SPA-style fallback)
+  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
 
 app.use((err, req, res, next) => {
@@ -120,12 +150,18 @@ async function start() {
   try {
     await loadDatabases();
 
+    // Initialize email transporter
+    initTransporter();
+
     app.listen(PORT, () => {
       console.log(`\n🌍 IP Geolocation API running → http://localhost:${PORT}`);
+      console.log(`\n📄 Pages:`);
+      console.log(`   Landing:   http://localhost:${PORT}/`);
+      console.log(`   Pricing:   http://localhost:${PORT}/pricing.html`);
+      console.log(`   Dashboard: http://localhost:${PORT}/dashboard.html`);
       console.log(`\n📋 Quick test commands:`);
       console.log(`   curl -H "X-Api-Key: test_free_geo123" http://localhost:${PORT}/api/ip/81.2.69.142`);
       console.log(`   curl -H "X-Api-Key: test_free_geo123" http://localhost:${PORT}/api/ip/me`);
-      console.log(`   curl -H "X-Api-Key: test_free_geo123" http://localhost:${PORT}/api/ip/2.125.160.216/country`);
       console.log(`   curl http://localhost:${PORT}/keys/plans\n`);
     });
   } catch (err) {

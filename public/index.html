@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IP Geolocation API — Fast, Accurate IP Lookup | Zero Cost Per Call</title>
+  <meta name="description" content="Self-hosted IP geolocation API powered by MaxMind GeoLite2. Get country, city, timezone, ISP data for any IP. Free tier with 1,000 requests/day.">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
+</head>
+<body>
+
+  <!-- ═══ Navigation ═══ -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <div class="logo-icon">
+          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <span>GeoIP API</span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#demo">Live Demo</a></li>
+        <li><a href="#code-examples">Docs</a></li>
+        <li><a href="#comparison">Compare</a></li>
+        <li><a href="/pricing.html">Pricing</a></li>
+        <li><a href="/dashboard.html">Dashboard</a></li>
+        <li><a href="/pricing.html" class="nav-cta">Get API Key →</a></li>
+      </ul>
+      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ═══ Hero Section ═══ -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        v1.0 — Self-hosted · Zero per-request cost
+      </div>
+      <h1>
+        IP Geolocation<br>
+        <span class="gradient-text">Made Lightning Fast</span>
+      </h1>
+      <p class="hero-subtitle">
+        Get country, city, timezone, ISP, and coordinates for any IP address in under 10ms.
+        Powered by MaxMind GeoLite2 — your server, your data, zero API costs.
+      </p>
+      <div class="hero-actions">
+        <a href="/pricing.html" class="btn btn-primary btn-lg">Get Free API Key →</a>
+        <a href="#demo" class="btn btn-secondary btn-lg">Try Live Demo</a>
+      </div>
+
+      <!-- Hero Code Preview -->
+      <div class="hero-code reveal">
+        <div class="code-header">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <span class="code-title">response.json</span>
+        </div>
+        <div class="code-body">
+<pre>{
+  <span class="code-key">"success"</span>: <span class="code-bool">true</span>,
+  <span class="code-key">"data"</span>: {
+    <span class="code-key">"ip"</span>: <span class="code-string">"81.2.69.142"</span>,
+    <span class="code-key">"geo"</span>: {
+      <span class="code-key">"country"</span>: <span class="code-string">"United Kingdom"</span>,
+      <span class="code-key">"countryCode"</span>: <span class="code-string">"GB"</span>,
+      <span class="code-key">"city"</span>: <span class="code-string">"London"</span>,
+      <span class="code-key">"latitude"</span>: <span class="code-number">51.5142</span>,
+      <span class="code-key">"longitude"</span>: <span class="code-number">-0.0931</span>,
+      <span class="code-key">"timezone"</span>: <span class="code-string">"Europe/London"</span>,
+      <span class="code-key">"currency"</span>: <span class="code-string">"GBP"</span>
+    },
+    <span class="code-key">"network"</span>: {
+      <span class="code-key">"asn"</span>: <span class="code-string">"AS2856"</span>,
+      <span class="code-key">"organization"</span>: <span class="code-string">"British Telecommunications PLC"</span>
+    }
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Stats Bar ═══ -->
+  <section class="container">
+    <div class="stats-bar reveal">
+      <div class="stat-item">
+        <div class="stat-value">&lt;10ms</div>
+        <div class="stat-label">Avg Response Time</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">98%+</div>
+        <div class="stat-label">Country Accuracy</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">₹0</div>
+        <div class="stat-label">Per-Request Cost</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">IPv4+v6</div>
+        <div class="stat-label">Full Coverage</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Features ═══ -->
+  <section class="section" id="features">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-label">Features</div>
+        <h2 class="section-title">Everything You Need for IP Intelligence</h2>
+        <p class="section-subtitle">Production-ready IP geolocation with zero external dependencies and zero per-request costs.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card reveal">
+          <div class="feature-icon blue">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <h3>Blazing Fast</h3>
+          <p>Local MMDB lookups complete in under 10ms. No external API calls, no network latency — pure in-memory speed.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon emerald">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          </div>
+          <h3>High Accuracy</h3>
+          <p>Powered by MaxMind GeoLite2 — 98%+ country accuracy, 80%+ city-level precision across all regions globally.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon cyan">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          </div>
+          <h3>Zero API Cost</h3>
+          <p>Self-hosted means zero per-request charges. Pay nothing for 1 request or 10 million — your only cost is hosting.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon purple">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><polygon points="12 22.08 12 12 3 6.92 3 17.08 12 22.08"/><polygon points="12 22.08 21 17.08 21 6.92 12 12 12 22.08"/><polygon points="12 12 21 6.92 12 1.84 3 6.92 12 12"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          </div>
+          <h3>Bulk Lookups</h3>
+          <p>Process up to 100 IPs in a single API call with our Pro plan. Perfect for batch processing and analytics pipelines.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon amber">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+          </div>
+          <h3>Rich Data</h3>
+          <p>Country, city, region, coordinates, timezone, UTC offset, currency, calling code, ISP/ASN — all in one response.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon rose">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3>Your Data, Your Server</h3>
+          <p>No third-party dependencies. Your users' IPs never leave your infrastructure. Full GDPR compliance by design.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Live Demo ═══ -->
+  <section class="section" id="demo">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-label">Live Demo</div>
+        <h2 class="section-title">Try It Right Now</h2>
+        <p class="section-subtitle">Enter any public IP address and see the geolocation data in real-time.</p>
+      </div>
+      <div class="demo-container reveal">
+        <div class="demo-input-panel">
+          <h3>IP Lookup</h3>
+          <p>Enter an IP address or pick one below to see the API response.</p>
+          <div class="input-group">
+            <input type="text" id="demoIpInput" placeholder="e.g. 8.8.8.8" autocomplete="off">
+            <button class="btn btn-primary" id="demoLookupBtn">Lookup</button>
+          </div>
+          <div class="demo-quick-ips">
+            <button data-ip="8.8.8.8">8.8.8.8</button>
+            <button data-ip="1.1.1.1">1.1.1.1</button>
+            <button data-ip="81.2.69.142">81.2.69.142</button>
+            <button data-ip="2.125.160.216">2.125.160.216</button>
+            <button data-ip="103.21.244.0">103.21.244.0</button>
+          </div>
+        </div>
+        <div class="demo-result" id="demoResult">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-title">API Response</span>
+          </div>
+          <div class="code-body">
+            <pre id="demoOutput"><span class="code-comment">// Click "Lookup" or pick an IP to see results</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Code Examples ═══ -->
+  <section class="section" id="code-examples">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-label">Integration</div>
+        <h2 class="section-title">Works with Every Language</h2>
+        <p class="section-subtitle">Simple REST API — just add your key and start making requests.</p>
+      </div>
+      <div class="code-example-wrapper reveal">
+        <div class="code-tabs">
+          <button class="code-tab active" data-tab="curl">cURL</button>
+          <button class="code-tab" data-tab="javascript">JavaScript</button>
+          <button class="code-tab" data-tab="python">Python</button>
+          <button class="code-tab" data-tab="go">Go</button>
+        </div>
+        <div class="code-panel active" data-panel="curl">
+          <div class="code-body">
+<pre><span class="code-comment"># Basic IP lookup</span>
+<span class="code-keyword">curl</span> -H <span class="code-string">"X-Api-Key: YOUR_API_KEY"</span> \
+     <span class="code-url">https://yourdomain.com/api/ip/8.8.8.8</span>
+
+<span class="code-comment"># Look up your own IP</span>
+<span class="code-keyword">curl</span> -H <span class="code-string">"X-Api-Key: YOUR_API_KEY"</span> \
+     <span class="code-url">https://yourdomain.com/api/ip/me</span>
+
+<span class="code-comment"># Country only (lightweight)</span>
+<span class="code-keyword">curl</span> -H <span class="code-string">"X-Api-Key: YOUR_API_KEY"</span> \
+     <span class="code-url">https://yourdomain.com/api/ip/8.8.8.8/country</span></pre>
+          </div>
+        </div>
+        <div class="code-panel" data-panel="javascript">
+          <div class="code-body">
+<pre><span class="code-keyword">const</span> response = <span class="code-keyword">await</span> <span class="code-keyword">fetch</span>(<span class="code-string">'https://yourdomain.com/api/ip/8.8.8.8'</span>, {
+  <span class="code-key">headers</span>: { <span class="code-string">'X-Api-Key'</span>: <span class="code-string">'YOUR_API_KEY'</span> }
+});
+
+<span class="code-keyword">const</span> data = <span class="code-keyword">await</span> response.<span class="code-keyword">json</span>();
+console.<span class="code-keyword">log</span>(data.data.geo.country);    <span class="code-comment">// "United States"</span>
+console.<span class="code-keyword">log</span>(data.data.geo.timezone);   <span class="code-comment">// "America/Chicago"</span>
+console.<span class="code-keyword">log</span>(data.data.geo.latitude);   <span class="code-comment">// 37.751</span></pre>
+          </div>
+        </div>
+        <div class="code-panel" data-panel="python">
+          <div class="code-body">
+<pre><span class="code-keyword">import</span> requests
+
+response = requests.<span class="code-keyword">get</span>(
+    <span class="code-string">'https://yourdomain.com/api/ip/8.8.8.8'</span>,
+    headers={<span class="code-string">'X-Api-Key'</span>: <span class="code-string">'YOUR_API_KEY'</span>}
+)
+
+data = response.<span class="code-keyword">json</span>()
+<span class="code-keyword">print</span>(data[<span class="code-string">'data'</span>][<span class="code-string">'geo'</span>][<span class="code-string">'country'</span>])    <span class="code-comment"># United States</span>
+<span class="code-keyword">print</span>(data[<span class="code-string">'data'</span>][<span class="code-string">'geo'</span>][<span class="code-string">'timezone'</span>])   <span class="code-comment"># America/Chicago</span></pre>
+          </div>
+        </div>
+        <div class="code-panel" data-panel="go">
+          <div class="code-body">
+<pre><span class="code-keyword">req</span>, _ := http.<span class="code-keyword">NewRequest</span>(<span class="code-string">"GET"</span>,
+    <span class="code-string">"https://yourdomain.com/api/ip/8.8.8.8"</span>, <span class="code-null">nil</span>)
+req.Header.<span class="code-keyword">Set</span>(<span class="code-string">"X-Api-Key"</span>, <span class="code-string">"YOUR_API_KEY"</span>)
+
+<span class="code-keyword">resp</span>, _ := http.DefaultClient.<span class="code-keyword">Do</span>(req)
+<span class="code-keyword">defer</span> resp.Body.<span class="code-keyword">Close</span>()
+
+<span class="code-keyword">var</span> result <span class="code-keyword">map</span>[<span class="code-keyword">string</span>]<span class="code-keyword">interface</span>{}
+json.<span class="code-keyword">NewDecoder</span>(resp.Body).<span class="code-keyword">Decode</span>(&result)
+fmt.<span class="code-keyword">Println</span>(result)  <span class="code-comment">// full geo data</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Comparison Table ═══ -->
+  <section class="section" id="comparison">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-label">Comparison</div>
+        <h2 class="section-title">Why Choose Us?</h2>
+        <p class="section-subtitle">Self-hosted advantage — lowest price because your cost per call is literally zero.</p>
+      </div>
+      <div class="comparison-table-wrapper reveal">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th class="highlight">
+                <svg class="icon-svg" style="width:16px; height:16px; margin-right:4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>GeoIP API
+              </th>
+              <th>ipapi.co</th>
+              <th>ipinfo.io</th>
+              <th>ipgeolocation.io</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Deployment</td>
+              <td class="highlight">Self-Hosted (Local)</td>
+              <td>Cloud SaaS</td>
+              <td>Cloud SaaS</td>
+              <td>Cloud SaaS</td>
+            </tr>
+            <tr>
+              <td>Cost Per Call</td>
+              <td class="highlight">₹0 (Always Free)</td>
+              <td>Metered / Overages</td>
+              <td>Metered / Overages</td>
+              <td>Metered / Overages</td>
+            </tr>
+            <tr>
+              <td>Avg Latency</td>
+              <td class="highlight">&lt; 10ms (In-Memory)</td>
+              <td>50ms - 200ms</td>
+              <td>50ms - 150ms</td>
+              <td>60ms - 250ms</td>
+            </tr>
+            <tr>
+              <td>Data Privacy</td>
+              <td class="highlight">
+                <span class="check"><svg class="icon-svg icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 100% Private</span>
+              </td>
+              <td>IPs Sent to Third-Party</td>
+              <td>IPs Sent to Third-Party</td>
+              <td>IPs Sent to Third-Party</td>
+            </tr>
+            <tr>
+              <td>Offline Support</td>
+              <td class="highlight">
+                <span class="check"><svg class="icon-svg icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Yes (Air-gapped)</span>
+              </td>
+              <td><span class="cross"><svg class="icon-svg icon-cross" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> No</span></td>
+              <td><span class="cross"><svg class="icon-svg icon-cross" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> No</span></td>
+              <td><span class="cross"><svg class="icon-svg icon-cross" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> No</span></td>
+            </tr>
+            <tr>
+              <td>Billing / Overage risk</td>
+              <td class="highlight">None</td>
+              <td>High risk</td>
+              <td>High risk</td>
+              <td>High risk</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CTA Section ═══ -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header reveal">
+        <h2 class="section-title">Ready to Get Started?</h2>
+        <p class="section-subtitle">Start with our free tier — 1,000 requests per day, no credit card required.</p>
+        <div class="hero-actions" style="margin-top: 2rem;">
+          <a href="/pricing.html" class="btn btn-primary btn-lg">View Pricing & Get Key →</a>
+          <a href="/dashboard.html" class="btn btn-secondary btn-lg">Open Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Footer ═══ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-copy">© 2026 GeoIP API. All rights reserved.</div>
+        <ul class="footer-links">
+          <li><a href="/pricing.html">Pricing</a></li>
+          <li><a href="/dashboard.html">Dashboard</a></li>
+          <li><a href="#code-examples">API Docs</a></li>
+          <li><a href="/health">Health</a></li>
+        </ul>
+        <div class="footer-attribution">
+          This product includes GeoLite2 data created by MaxMind, available from <a href="https://www.maxmind.com" target="_blank" rel="noopener">maxmind.com</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

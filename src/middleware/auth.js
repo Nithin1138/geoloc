@@ -13,6 +13,9 @@
  */
 
 const { v4: uuidv4 } = require("uuid");
+const fs = require("fs");
+const path = require("path");
+
 
 // ─── PLAN DEFINITIONS ────────────────────────────────────────
 const PLANS = {
@@ -54,27 +57,64 @@ const PLANS = {
   },
 };
 
-// ─── IN-MEMORY STORE (replace with DB in prod) ───────────────
+// ─── FILE PERSISTENCE ─────────────────────────────────────────
+const KEYS_FILE = path.join(__dirname, "..", "data", "keys.json");
 const keyStore = new Map();
 
-// Pre-seeded test keys
-[
-  { key: "test_free_geo123",    plan: "free"       },
-  { key: "test_starter_geo456", plan: "starter"    },
-  { key: "test_pro_geo789",     plan: "pro"        },
-].forEach(({ key, plan }) => {
-  keyStore.set(key, {
-    key,
-    plan,
-    active: true,
-    created: new Date().toISOString(),
-    todayCount: 0,
-    monthCount: 0,
-    totalCount: 0,
-    lastReset: new Date().toDateString(),
-    lastUsed: null,
+function saveKeys() {
+  try {
+    const data = JSON.stringify(Array.from(keyStore.entries()), null, 2);
+    const dir = path.dirname(KEYS_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(KEYS_FILE, data, "utf8");
+  } catch (err) {
+    console.error("❌ Failed to save keys:", err.message);
+  }
+}
+
+function loadKeys() {
+  try {
+    if (fs.existsSync(KEYS_FILE)) {
+      const data = fs.readFileSync(KEYS_FILE, "utf8");
+      const entries = JSON.parse(data);
+      keyStore.clear();
+      for (const [key, record] of entries) {
+        keyStore.set(key, record);
+      }
+    } else {
+      seedDefaultKeys();
+      saveKeys();
+    }
+  } catch (err) {
+    console.error("❌ Failed to load keys:", err.message);
+    seedDefaultKeys();
+  }
+}
+
+function seedDefaultKeys() {
+  keyStore.clear();
+  [
+    { key: "test_free_geo123",    plan: "free"       },
+    { key: "test_starter_geo456", plan: "starter"    },
+    { key: "test_pro_geo789",     plan: "pro"        },
+  ].forEach(({ key, plan }) => {
+    keyStore.set(key, {
+      key,
+      plan,
+      active: true,
+      created: new Date().toISOString(),
+      todayCount: 0,
+      monthCount: 0,
+      totalCount: 0,
+      lastReset: new Date().toDateString(),
+      lastUsed: null,
+    });
   });
-});
+}
+
+// Initial load on startup
+loadKeys();
+
 
 // ─── KEY MANAGEMENT ──────────────────────────────────────────
 function createKey(plan = "free", metadata = {}) {
@@ -93,6 +133,7 @@ function createKey(plan = "free", metadata = {}) {
     ...metadata,
   };
   keyStore.set(key, record);
+  saveKeys();
   return { key, plan, limits: PLANS[plan] };
 }
 
@@ -126,10 +167,11 @@ function getKeyStats(key) {
 }
 
 // ─── USAGE TRACKING ──────────────────────────────────────────
-function checkAndTrack(key) {
+function checkAndTrack(key, skipTrack = false) {
   const record = keyStore.get(key);
   if (!record) return { allowed: false, reason: "Invalid API key" };
   if (!record.active) return { allowed: false, reason: "API key is disabled" };
+
 
   const plan = PLANS[record.plan];
   const today = new Date().toDateString();
@@ -158,11 +200,16 @@ function checkAndTrack(key) {
     };
   }
 
-  // Track usage
-  record.todayCount++;
-  record.monthCount++;
-  record.totalCount++;
-  record.lastUsed = new Date().toISOString();
+  if (!skipTrack) {
+    // Track usage
+    record.todayCount++;
+    record.monthCount++;
+    record.totalCount++;
+    record.lastUsed = new Date().toISOString();
+
+    saveKeys();
+  }
+
 
   const remaining = {
     today: plan.requestsPerDay - record.todayCount,
@@ -197,7 +244,8 @@ function requireApiKey(req, res, next) {
     });
   }
 
-  const usage = checkAndTrack(key);
+  const skipTrack = req.originalUrl?.includes("/keys/stats") || false;
+  const usage = checkAndTrack(key, skipTrack);
   if (!usage.allowed) {
     return res.status(429).json({
       success: false,
@@ -241,4 +289,15 @@ function requirePlan(...allowedPlans) {
   };
 }
 
-module.exports = { requireApiKey, requirePlan, createKey, getKey, getKeyStats, PLANS };
+/**
+ * Find a key record by payment ID (for idempotency in webhooks)
+ */
+function getKeyByPaymentId(paymentId) {
+  if (!paymentId) return null;
+  for (const [, record] of keyStore) {
+    if (record.paymentId === paymentId) return record;
+  }
+  return null;
+}
+
+module.exports = { requireApiKey, requirePlan, createKey, getKey, getKeyStats, getKeyByPaymentId, PLANS };
