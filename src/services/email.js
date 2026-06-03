@@ -1,37 +1,28 @@
 /**
  * Email Service — Sends API keys to customers after payment
  *
- * Uses Nodemailer with configurable SMTP.
- * Falls back to console logging if SMTP isn't configured (dev mode).
+ * Uses Resend API.
+ * Falls back to console logging if Resend API Key is not configured (dev mode).
  */
 
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-let transporter = null;
+let resendClient = null;
 
 /**
- * Initialize the email transporter
+ * Initialize the email transporter/client
  */
 function initTransporter() {
-  const host = process.env.SMTP_HOST;
-  const port = process.env.SMTP_PORT;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const apiKey = process.env.RESEND_API_KEY;
 
-  if (!host || !user || !pass) {
-    console.log("📧 SMTP not configured — emails will be logged to console (dev mode)");
+  if (!apiKey) {
+    console.log("📧 Resend API Key not configured — emails will be logged to console (dev mode)");
     return null;
   }
 
-  transporter = nodemailer.createTransport({
-    host,
-    port: parseInt(port, 10) || 587,
-    secure: parseInt(port, 10) === 465,
-    auth: { user, pass },
-  });
-
-  console.log(`📧 Email transporter ready → ${host}`);
-  return transporter;
+  resendClient = new Resend(apiKey);
+  console.log(`📧 Resend email client initialized`);
+  return resendClient;
 }
 
 /**
@@ -40,6 +31,7 @@ function initTransporter() {
 async function sendApiKeyEmail(email, apiKey, plan, limits) {
   const appName = process.env.APP_NAME || "GeoIP API";
   const appUrl = process.env.APP_URL || "http://localhost:3000";
+  const fromEmail = process.env.FROM_EMAIL || "onboarding@resend.dev";
   const planName = plan.charAt(0).toUpperCase() + plan.slice(1);
 
   const subject = `🌍 Your ${appName} Key — ${planName} Plan`;
@@ -114,7 +106,7 @@ async function sendApiKeyEmail(email, apiKey, plan, limits) {
     </div>
 
   </div>
-</body>
+ </body>
 </html>`;
 
   const text = `
@@ -132,32 +124,36 @@ Daily Limit: ${limits?.perDay?.toLocaleString() || "—"} requests
 Monthly Limit: ${limits?.perMonth?.toLocaleString() || "—"} requests
 `;
 
-  // If SMTP not configured, log to console
-  if (!transporter) {
+  // If Resend client not configured, log to console
+  if (!resendClient) {
     console.log("\n╔══════════════════════════════════════════════════╗");
-    console.log("║  📧 EMAIL (dev mode — SMTP not configured)       ║");
+    console.log("║  📧 EMAIL (dev mode — Resend not configured)     ║");
     console.log("╠══════════════════════════════════════════════════╣");
     console.log(`║  To: ${email}`);
     console.log(`║  Subject: ${subject}`);
     console.log(`║  API Key: ${apiKey}`);
     console.log(`║  Plan: ${planName}`);
     console.log("╚══════════════════════════════════════════════════╝\n");
-    return { messageId: "dev-mode-" + Date.now(), devMode: true };
+    return { id: "dev-mode-" + Date.now(), devMode: true };
   }
 
   try {
-    const info = await transporter.sendMail({
-      from: `"${appName}" <${process.env.SMTP_USER}>`,
-      to: email,
+    const { data, error } = await resendClient.emails.send({
+      from: `"${appName}" <${fromEmail}>`,
+      to: [email],
       subject,
       text,
       html,
     });
 
-    console.log(`📧 Email sent to ${email} — ${info.messageId}`);
-    return info;
+    if (error) {
+      throw error;
+    }
+
+    console.log(`📧 Email sent to ${email} — ID: ${data.id}`);
+    return data;
   } catch (err) {
-    console.error(`❌ Email failed for ${email}:`, err.message);
+    console.error(`❌ Email failed for ${email}:`, err.message || err);
     throw err;
   }
 }

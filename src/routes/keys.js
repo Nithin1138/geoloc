@@ -19,8 +19,9 @@ const { createKey, getKeyStats, PLANS, requireApiKey } = require("../middleware/
  *   - Paid: verify Razorpay/Stripe payment_id first
  *     e.g. await razorpay.payments.fetch(payment_id)
  */
-router.post("/new", (req, res) => {
+router.post("/new", express.json(), express.urlencoded({ extended: true }), (req, res) => {
   const plan = (req.query.plan || "free").toLowerCase();
+  const email = (req.body?.email || req.query?.email || req.body?.emailFree || req.query?.emailFree || "").trim().toLowerCase();
 
   if (!PLANS[plan]) {
     return res.status(400).json({
@@ -30,15 +31,45 @@ router.post("/new", (req, res) => {
     });
   }
 
-  // In production: gate paid plans behind payment verification
-  // if (plan !== "free") {
-  //   const paymentId = req.body?.payment_id;
-  //   if (!paymentId) return res.status(402).json({ error: "payment_id required for paid plans" });
-  //   await verifyRazorpayPayment(paymentId, PLANS[plan].priceINR);
-  // }
+  // Gate paid plans behind payment verification
+  if (plan !== "free") {
+    return res.status(400).json({
+      success: false,
+      error: "Paid plans must be purchased via the payments interface.",
+    });
+  }
+
+  if (!email || !email.includes("@")) {
+    return res.status(400).json({
+      success: false,
+      error: "A valid email is required to obtain a free API key.",
+    });
+  }
+
+  // Check if a free key already exists for this email
+  const { getKeyByEmail } = require("../middleware/auth");
+  const existingKeyRecord = getKeyByEmail(email, "free");
+  if (existingKeyRecord) {
+    return res.status(200).json({
+      success: true,
+      message: "Here is your existing free API key:",
+      apiKey: existingKeyRecord.key,
+      plan: existingKeyRecord.plan,
+      limits: {
+        requestsPerDay: PLANS[plan].requestsPerDay,
+        requestsPerMonth: PLANS[plan].requestsPerMonth,
+      },
+      features: PLANS[plan].features,
+      usage: {
+        header: `X-Api-Key: ${existingKeyRecord.key}`,
+        query: `?api_key=${existingKeyRecord.key}`,
+        example: `curl -H "X-Api-Key: ${existingKeyRecord.key}" https://yourdomain.com/api/ip/8.8.8.8`,
+      },
+    });
+  }
 
   try {
-    const result = createKey(plan);
+    const result = createKey(plan, { email });
     return res.status(201).json({
       success: true,
       message: "🎉 API key created! Save this — it won't be shown again.",

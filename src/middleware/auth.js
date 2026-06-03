@@ -300,4 +300,18 @@ function getKeyByPaymentId(paymentId) {
   return null;
 }
 
-module.exports = { requireApiKey, requirePlan, createKey, getKey, getKeyStats, getKeyByPaymentId, PLANS };
+/**
+ * Find a key record by email and plan (to prevent duplicate free keys)
+ */
+function getKeyByEmail(email, plan) {
+  if (!email) return null;
+  const targetEmail = email.trim().toLowerCase();
+  for (const [, record] of keyStore) {
+    if (record.email?.trim().toLowerCase() === targetEmail && record.plan === plan) {
+      return record;
+    }
+  }
+  return null;
+}
+
+module.exports = { requireApiKey, requirePlan, createKey, getKey, getKeyStats, getKeyByPaymentId, getKeyByEmail, PLANS };
