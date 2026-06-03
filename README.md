@@ -207,3 +207,4 @@ Include this in your API docs / footer.
 | Data source | MaxMind | MaxMind | Proprietary | MaxMind |
 
 **Your moat**: cheapest price because your cost = ₹0 per call.
+# geoloc
