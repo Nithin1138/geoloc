@@ -1,0 +1,20 @@
+{
+  "name": "ip-geo-api",
+  "version": "1.0.0",
+  "description": "Self-hosted IP Geolocation API using MaxMind GeoLite2 — zero external API cost",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "download-db": "node scripts/download-db.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "maxmind": "^4.3.11",
+    "tar": "^7.5.16",
+    "uuid": "^9.0.0"
+  }
+}
