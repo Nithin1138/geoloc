@@ -815,18 +815,51 @@ body::before {
 /* ─── Pricing Cards ────────────────────────────────────────── */
 .pricing-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.5rem;
-  align-items: start;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 .pricing-card {
-  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  padding: 2.5rem;
   background: var(--bg-card);
   border: 1px solid var(--border-primary);
   border-radius: var(--card-radius);
   position: relative;
   transition: all var(--transition-base);
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .pricing-card {
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: space-between;
+  }
+
+  .pricing-info {
+    flex: 1.2;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-right: 2.5rem;
+    border-right: 1px solid var(--border-primary);
+  }
+
+  .pricing-features-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-left: 1.5rem;
+  }
+
+  .pricing-features {
+    margin-bottom: 0;
+  }
 }
 
 .pricing-card:hover {
