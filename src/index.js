@@ -24,10 +24,14 @@ const rateLimit = require("express-rate-limit");
 const { loadDatabases, getDbStatus } = require("./geo");
 const { connectDB } = require("./db");
 const { initTransporter } = require("./services/email");
+const { loadThreatLists, startAutoRefresh, getThreatListStats } = require("./threat-lists");
+const { analyticsMiddleware } = require("./analytics");
+const { trackRequest } = require("./abuse-tracker");
 const ipRouter = require("./routes/ip");
 const keysRouter = require("./routes/keys");
 const paymentsRouter = require("./routes/payments");
 const webhooksRouter = require("./routes/webhooks");
+const analyticsRouter = require("./routes/analytics");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -55,6 +59,10 @@ app.use(express.json({ limit: "100kb" }));
 // ─── STATIC FILES (Landing page, Pricing, Dashboard) ─────────
 app.use(express.static(path.join(__dirname, "..", "public")));
 
+// ─── ANALYTICS & ABUSE TRACKING MIDDLEWARE ────────────────────
+app.use(analyticsMiddleware);
+app.use(trackRequest);
+
 // Global IP-level rate limit (brute force protection, BEFORE key auth)
 app.use(
   rateLimit({
@@ -71,31 +79,33 @@ app.use(
 // API info endpoint (moved from / to /api so landing page can be served)
 app.get("/api", (req, res) => {
   res.json({
-    name: "IP Geolocation API",
-    version: "1.0.0",
-    description: "Fast, accurate IP geolocation powered by MaxMind GeoLite2",
+    name: "IP Geolocation & Threat Intelligence API",
+    version: "2.0.0",
+    description: "Fast IP geolocation + VPN/TOR/proxy detection, risk scoring, bot detection & analytics",
     endpoints: {
-      lookupIP:      "GET  /api/ip/:ip",
-      selfLookup:    "GET  /api/ip/me",
-      countryOnly:   "GET  /api/ip/:ip/country",
-      bulkLookup:    "POST /api/ip/bulk          (Pro+)",
-      generateKey:   "POST /keys/new?plan=free",
-      keyStats:      "GET  /keys/stats           (auth required)",
-      plans:         "GET  /keys/plans",
-      health:        "GET  /health",
-      dbStatus:      "GET  /status",
+      lookupIP:        "GET  /api/ip/:ip",
+      selfLookup:      "GET  /api/ip/me",
+      countryOnly:     "GET  /api/ip/:ip/country",
+      bulkLookup:      "POST /api/ip/bulk           (Pro+)",
+      analytics:       "GET  /api/analytics          (Enterprise)",
+      threatStatus:    "GET  /api/analytics/threat-status (Pro+)",
+      generateKey:     "POST /keys/new?plan=free",
+      keyStats:        "GET  /keys/stats             (auth required)",
+      plans:           "GET  /keys/plans",
+      health:          "GET  /health",
+      dbStatus:        "GET  /status",
+    },
+    features: {
+      free:       ["geo (country, city, timezone)", "1,000 req/day"],
+      starter:    ["+ ASN/ISP", "+ hosting detection", "+ currency/calling code", "10,000 req/day"],
+      pro:        ["+ VPN/TOR/proxy detection", "+ risk scoring", "+ bulk lookup", "100,000 req/day"],
+      enterprise: ["+ bot detection", "+ abuse detection", "+ API analytics", "1M req/day + SLA"],
     },
     auth: "X-Api-Key header OR ?api_key= query param",
     testKeys: {
       free:    "test_free_geo123    (1,000 req/day)",
       starter: "test_starter_geo456 (10,000 req/day)",
-      pro:     "test_pro_geo789     (100,000 req/day + bulk)",
-    },
-    pricing: {
-      free:       "₹0 — 1,000 req/day",
-      starter:    "₹499/mo — 10,000 req/day",
-      pro:        "₹1,999/mo — 100,000 req/day + bulk",
-      enterprise: "₹9,999/mo — 1M req/day + SLA",
+      pro:     "test_pro_geo789     (100,000 req/day + bulk + threat)",
     },
     exampleResponse: "GET /api/ip/81.2.69.142 with your key",
   });
@@ -112,9 +122,11 @@ app.get("/health", (req, res) => {
 
 app.get("/status", (req, res) => {
   const dbStatus = getDbStatus();
+  const threatStats = getThreatListStats();
   res.json({
     status: dbStatus.cityDb.loaded ? "operational" : "degraded",
     databases: dbStatus,
+    threatIntelligence: threatStats,
     dataSource: "MaxMind GeoLite2",
     dataLicense: "CC BY-SA 4.0",
     attribution: "This product includes GeoLite2 data created by MaxMind, available from https://www.maxmind.com",
@@ -123,6 +135,7 @@ app.get("/status", (req, res) => {
 
 // ─── PROTECTED & PAYMENT ROUTES ──────────────────────────────
 app.use("/api/ip", ipRouter);
+app.use("/api/analytics", analyticsRouter);
 app.use("/keys", keysRouter);
 app.use("/payments", paymentsRouter);
 app.use("/webhooks", webhooksRouter);
@@ -151,6 +164,10 @@ async function start() {
   try {
     await loadDatabases();
 
+    // Load threat intelligence lists (TOR, VPN, proxy, datacenter)
+    await loadThreatLists();
+    startAutoRefresh(); // Auto-refresh every 6 hours
+
     // Connect MongoDB database
     connectDB();
 
@@ -158,15 +175,16 @@ async function start() {
     initTransporter();
 
     app.listen(PORT, () => {
-      console.log(`\n🌍 IP Geolocation API running → http://localhost:${PORT}`);
+      console.log(`\n🌍 IP Geolocation & Threat Intelligence API running → http://localhost:${PORT}`);
       console.log(`\n📄 Pages:`);
       console.log(`   Landing:   http://localhost:${PORT}/`);
       console.log(`   Pricing:   http://localhost:${PORT}/pricing.html`);
       console.log(`   Dashboard: http://localhost:${PORT}/dashboard.html`);
       console.log(`\n📋 Quick test commands:`);
-      console.log(`   curl -H "X-Api-Key: test_free_geo123" http://localhost:${PORT}/api/ip/81.2.69.142`);
-      console.log(`   curl -H "X-Api-Key: test_free_geo123" http://localhost:${PORT}/api/ip/me`);
-      console.log(`   curl http://localhost:${PORT}/keys/plans\n`);
+      console.log(`   curl -H "X-Api-Key: test_pro_geo789" http://localhost:${PORT}/api/ip/8.8.8.8`);
+      console.log(`   curl -H "X-Api-Key: test_pro_geo789" http://localhost:${PORT}/api/ip/me`);
+      console.log(`   curl http://localhost:${PORT}/keys/plans`);
+      console.log(`   curl http://localhost:${PORT}/status\n`);
     });
   } catch (err) {
     console.error("❌ Failed to start:", err.message);

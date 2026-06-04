@@ -163,6 +163,59 @@ async function downloadDB({ edition, filename }) {
   }
 }
 
+async function downloadThreatList(name, url, filename) {
+  const THREAT_DIR = path.join(DATA_DIR, "threat-lists");
+  if (!fs.existsSync(THREAT_DIR)) fs.mkdirSync(THREAT_DIR, { recursive: true });
+
+  const dest = path.join(THREAT_DIR, filename);
+  if (fs.existsSync(dest)) {
+    console.log(`   ✅ ${name} already exists (skipping download)`);
+    return;
+  }
+
+  return new Promise((resolve, reject) => {
+    function makeRequest(reqUrl) {
+      https.get(reqUrl, (res) => {
+        if (res.statusCode === 301 || res.statusCode === 302) {
+          return makeRequest(res.headers.location);
+        }
+        if (res.statusCode !== 200) {
+          reject(new Error(`HTTP ${res.statusCode} for ${name}`));
+          return;
+        }
+        let data = "";
+        res.on("data", (chunk) => (data += chunk));
+        res.on("end", () => {
+          fs.writeFileSync(dest, data, "utf8");
+          const lines = data.split("\n").filter((l) => l.trim() && !l.startsWith("#")).length;
+          console.log(`   ✅ ${name}: ${lines.toLocaleString()} entries saved`);
+          resolve();
+        });
+      }).on("error", reject);
+    }
+    makeRequest(url);
+  });
+}
+
+async function downloadAllThreatLists() {
+  console.log("\n🛡️  Downloading threat intelligence lists...");
+
+  const THREAT_LISTS = [
+    { name: "TOR exit nodes", url: "https://check.torproject.org/torbulkexitlist", file: "tor-exit-nodes.txt" },
+    { name: "VPN IPs", url: "https://raw.githubusercontent.com/X4BNet/lists_vpn/main/output/vpn/ipv4.txt", file: "vpn-ips.txt" },
+    { name: "Proxy IPs", url: "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt", file: "proxy-ips.txt" },
+    { name: "Datacenter IPs", url: "https://raw.githubusercontent.com/X4BNet/lists_vpn/main/output/datacenter/ipv4.txt", file: "datacenter-ips.txt" },
+  ];
+
+  for (const list of THREAT_LISTS) {
+    try {
+      await downloadThreatList(list.name, list.url, list.file);
+    } catch (err) {
+      console.error(`   ❌ Failed to download ${list.name}: ${err.message}`);
+    }
+  }
+}
+
 async function main() {
   console.log("🌍 MaxMind GeoLite2 Database Downloader");
   console.log(`📁 Saving to: ${DATA_DIR}\n`);
@@ -183,12 +236,14 @@ async function main() {
     }
   }
 
-  console.log("\n🎉 All databases downloaded!");
+  // Download threat intelligence lists
+  await downloadAllThreatLists();
+
+  console.log("\n🎉 All databases and threat lists downloaded!");
   console.log("📅 Remember: MaxMind updates GeoLite2 every 2 weeks.");
-  console.log("   Schedule this script as a cron job to stay accurate.\n");
-  console.log("   Cron example (1st and 15th of each month at 3am):");
-  console.log("   0 3 1,15 * * cd /your/app && MAXMIND_LICENSE_KEY=xxx node scripts/download-db.js\n");
+  console.log("   Threat lists auto-refresh every 6 hours at runtime.\n");
   process.exit(0);
 }
 
 main();
+

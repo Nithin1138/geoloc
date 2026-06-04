@@ -34,7 +34,7 @@ const PLANS = {
     priceUSD: 6,
     requestsPerDay: 10000,
     requestsPerMonth: 100000,
-    features: ["basic lookup", "country + city", "timezone", "ASN/ISP", "currency", "calling code"],
+    features: ["basic lookup", "country + city", "timezone", "ASN/ISP", "hosting detection", "currency", "calling code"],
     rateLimit: "10,000 req/day",
   },
   pro: {
@@ -43,7 +43,7 @@ const PLANS = {
     priceUSD: 24,
     requestsPerDay: 100000,
     requestsPerMonth: 1000000,
-    features: ["all starter features", "bulk lookup", "self-lookup", "detailed subdivisions"],
+    features: ["all starter features", "bulk lookup", "self-lookup", "VPN detection", "TOR detection", "proxy detection", "datacenter detection", "risk scoring"],
     rateLimit: "100,000 req/day",
   },
   enterprise: {
@@ -51,6 +51,8 @@ const PLANS = {
     priceINR: 9999,
     priceUSD: 120,
     requestsPerDay: 1000000,
+    requestsPerMonth: 30000000,
+    features: ["all pro features", "bot detection", "abuse detection", "API analytics", "SLA"],
     rateLimit: "1,000,000 req/day",
   },
 };

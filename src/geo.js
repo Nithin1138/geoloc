@@ -16,6 +16,7 @@
 const maxmind = require("maxmind");
 const path = require("path");
 const fs = require("fs");
+const { isHostingProvider, getProviderName, getAsnType } = require("./hosting-providers");
 
 const DB_DIR = path.join(__dirname, "..", "data");
 const CITY_DB_PATH = path.join(DB_DIR, "GeoLite2-City.mmdb");
@@ -96,15 +97,23 @@ function lookupCity(ip) {
 
 /**
  * Look up ASN (Internet Service Provider) info
+ * Enhanced with hosting provider detection and network type classification
  */
 function lookupASN(ip) {
   if (!asnReader) return null;
   const raw = asnReader.get(ip);
   if (!raw) return null;
+
+  const org = raw.autonomous_system_organization || null;
+
   return {
     asn: raw.autonomous_system_number ? `AS${raw.autonomous_system_number}` : null,
     asnNumber: raw.autonomous_system_number || null,
-    organization: raw.autonomous_system_organization || null,
+    organization: org,
+    // Enhanced fields
+    networkType: getAsnType(org),
+    isHosting: isHostingProvider(org),
+    hostingProvider: getProviderName(org),
   };
 }
 

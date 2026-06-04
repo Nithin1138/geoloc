@@ -20,9 +20,11 @@ const {
   COUNTRY_CURRENCY,
   COUNTRY_CALLING_CODE,
 } = require("../utils");
+const { calculateRiskScore } = require("../risk-scoring");
+const { detectBot, detectAbuse } = require("../abuse-tracker");
 
 // ─── HELPER: build full response object ──────────────────────
-function buildGeoResponse(ip, version, typeInfo, geoData, asnData, plan) {
+function buildGeoResponse(ip, version, typeInfo, geoData, asnData, plan, req) {
   const countryISO = geoData?.country?.isoCode;
   const tz = geoData?.location?.timeZone;
 
@@ -76,13 +78,16 @@ function buildGeoResponse(ip, version, typeInfo, geoData, asnData, plan) {
   };
 
   // ASN data (starter+ plans)
-  const network =
-    plan !== "free" && asnData
-      ? {
-          asn: asnData.asn,
-          organization: asnData.organization,
-        }
-      : undefined;
+  let network;
+  if (plan !== "free" && asnData) {
+    network = {
+      asn: asnData.asn,
+      organization: asnData.organization,
+      networkType: asnData.networkType,
+      isHosting: asnData.isHosting,
+      hostingProvider: asnData.hostingProvider,
+    };
+  }
 
   // registeredCountry shown when different from geo country
   const registeredCountry =
@@ -94,11 +99,51 @@ function buildGeoResponse(ip, version, typeInfo, geoData, asnData, plan) {
         }
       : undefined;
 
+  // ─── Threat detection (Pro+ plans) ──────────────────────
+  let threat;
+  if (plan === "pro" || plan === "enterprise") {
+    const riskResult = calculateRiskScore(ip, { asnData, geoData });
+    threat = {
+      risk: {
+        score: riskResult.score,
+        level: riskResult.level,
+      },
+      signals: riskResult.signals,
+      isTor: riskResult.isTor,
+      isVPN: riskResult.isVPN,
+      isProxy: riskResult.isProxy,
+      isDatacenter: riskResult.isDatacenter,
+      isHosting: riskResult.isHosting,
+    };
+  }
+
+  // ─── Bot & Abuse detection (Enterprise only) ────────────
+  let security;
+  if (plan === "enterprise" && req) {
+    const botResult = detectBot(req);
+    const abuseResult = detectAbuse(ip);
+    security = {
+      bot: {
+        isBot: botResult.isBot,
+        confidence: botResult.botConfidence,
+        signals: botResult.botSignals,
+      },
+      abuse: {
+        isAbusive: abuseResult.isAbusive,
+        signals: abuseResult.abuseSignals,
+        requestsLastMinute: abuseResult.requestsLastMinute,
+        requestsLastHour: abuseResult.requestsLastHour,
+      },
+    };
+  }
+
   return {
     ...base,
     geo,
     ...(network && { network }),
     ...(registeredCountry && { registeredCountry }),
+    ...(threat && { threat }),
+    ...(security && { security }),
   };
 }
 
@@ -121,9 +166,12 @@ router.get("/me", requireApiKey, (req, res) => {
   const geoData = typeInfo.isPublic ? lookupCity(ip) : null;
   const asnData = typeInfo.isPublic ? lookupASN(ip) : null;
 
+  // Set resolved country for analytics
+  res._resolvedCountry = geoData?.country?.isoCode || null;
+
   return res.json({
     success: true,
-    data: buildGeoResponse(ip, version, typeInfo, geoData, asnData, req.plan),
+    data: buildGeoResponse(ip, version, typeInfo, geoData, asnData, req.plan, req),
     meta: {
       source: "MaxMind GeoLite2",
       detectedFrom: (() => {
@@ -170,7 +218,10 @@ router.get("/:ip", requireApiKey, (req, res) => {
     asnData = lookupASN(ip);
   }
 
-  const responseData = buildGeoResponse(ip, version, typeInfo, geoData, asnData, req.plan);
+  // Set resolved country for analytics
+  res._resolvedCountry = geoData?.country?.isoCode || null;
+
+  const responseData = buildGeoResponse(ip, version, typeInfo, geoData, asnData, req.plan, req);
 
   return res.json({
     success: true,
@@ -254,7 +305,7 @@ router.post(
       return {
         ip,
         success: true,
-        data: buildGeoResponse(ip, version, typeInfo, geoData, asnData, req.plan),
+        data: buildGeoResponse(ip, version, typeInfo, geoData, asnData, req.plan, req),
       };
     });
 
