@@ -1,0 +1,237 @@
+{
+  "timestamp": "2026-06-04T05:22:42.654Z",
+  "system": {
+    "cpus": 10,
+    "nodeVersion": "v24.14.0"
+  },
+  "singleProcess": [
+    {
+      "scenario": "Light Load",
+      "requests": 5835,
+      "success": 5835,
+      "failed": 0,
+      "successRate": 100,
+      "rps": 583.5,
+      "rpm": 35010,
+      "rph": 2100600,
+      "latency": {
+        "avg": 5.2,
+        "p50": 5,
+        "p95": 10,
+        "p99": 11,
+        "max": 27
+      }
+    },
+    {
+      "scenario": "Medium Load",
+      "requests": 23350,
+      "success": 23350,
+      "failed": 0,
+      "successRate": 100,
+      "rps": 2335,
+      "rpm": 140100,
+      "rph": 8406000,
+      "latency": {
+        "avg": 5.8,
+        "p50": 6,
+        "p95": 10,
+        "p99": 11,
+        "max": 12
+      }
+    },
+    {
+      "scenario": "Heavy Load",
+      "requests": 41550,
+      "success": 41550,
+      "failed": 0,
+      "successRate": 100,
+      "rps": 4155,
+      "rpm": 249300,
+      "rph": 14958000,
+      "latency": {
+        "avg": 6.47,
+        "p50": 6,
+        "p95": 11,
+        "p99": 12,
+        "max": 21
+      }
+    },
+    {
+      "scenario": "Extreme Load",
+      "requests": 84200,
+      "success": 84200,
+      "failed": 0,
+      "successRate": 100,
+      "rps": 8420,
+      "rpm": 505200,
+      "rph": 30312000,
+      "latency": {
+        "avg": 6.36,
+        "p50": 6,
+        "p95": 11,
+        "p99": 12,
+        "max": 16
+      }
+    },
+    {
+      "scenario": "Ultra Extreme",
+      "requests": 155000,
+      "success": 155000,
+      "failed": 0,
+      "successRate": 100,
+      "rps": 15500,
+      "rpm": 930000,
+      "rph": 55800000,
+      "latency": {
+        "avg": 6.87,
+        "p50": 7,
+        "p95": 11,
+        "p99": 12,
+        "max": 17
+      }
+    },
+    {
+      "scenario": "Max Burst",
+      "requests": 48000,
+      "success": 48000,
+      "failed": 0,
+      "successRate": 100,
+      "rps": 9600,
+      "rpm": 576000,
+      "rph": 34560000,
+      "latency": {
+        "avg": 34.69,
+        "p50": 15,
+        "p95": 94,
+        "p99": 100,
+        "max": 108
+      }
+    }
+  ],
+  "multiCoreCluster": [
+    {
+      "scenario": "Light Load",
+      "requests": 421950,
+      "success": 421950,
+      "failed": 0,
+      "successRate": 100,
+      "rps": 42195,
+      "rpm": 2531700,
+      "rph": 151902000,
+      "latency": {
+        "avg": 0.09,
+        "p50": 0,
+        "p95": 1,
+        "p99": 1,
+        "max": 16
+      }
+    },
+    {
+      "scenario": "Medium Load",
+      "requests": 561150,
+      "success": 561150,
+      "failed": 0,
+      "successRate": 100,
+      "rps": 56115,
+      "rpm": 3366900,
+      "rph": 202014000,
+      "latency": {
+        "avg": 0.28,
+        "p50": 0,
+        "p95": 1,
+        "p99": 1,
+        "max": 9
+      }
+    },
+    {
+      "scenario": "Heavy Load",
+      "requests": 547500,
+      "success": 547500,
+      "failed": 0,
+      "successRate": 100,
+      "rps": 54750,
+      "rpm": 3285000,
+      "rph": 197100000,
+      "latency": {
+        "avg": 0.61,
+        "p50": 1,
+        "p95": 1,
+        "p99": 1,
+        "max": 27
+      }
+    },
+    {
+      "scenario": "Extreme Load",
+      "requests": 541500,
+      "success": 541500,
+      "failed": 0,
+      "successRate": 100,
+      "rps": 54150,
+      "rpm": 3249000,
+      "rph": 194940000,
+      "latency": {
+        "avg": 1.25,
+        "p50": 1,
+        "p95": 2,
+        "p99": 2,
+        "max": 7
+      }
+    },
+    {
+      "scenario": "Ultra Extreme",
+      "requests": 527400,
+      "success": 527400,
+      "failed": 0,
+      "successRate": 100,
+      "rps": 52740,
+      "rpm": 3164400,
+      "rph": 189864000,
+      "latency": {
+        "avg": 2.57,
+        "p50": 3,
+        "p95": 3,
+        "p99": 4,
+        "max": 11
+      }
+    },
+    {
+      "scenario": "Max Burst",
+      "requests": 50500,
+      "success": 50500,
+      "failed": 0,
+      "successRate": 100,
+      "rps": 10100,
+      "rpm": 606000,
+      "rph": 36360000,
+      "latency": {
+        "avg": 27.07,
+        "p50": 14,
+        "p95": 95,
+        "p99": 101,
+        "max": 124
+      }
+    }
+  ],
+  "summary": {
+    "peakRps": {
+      "singleProcess": 15500,
+      "multiCore": 56115,
+      "improvementPercent": 262,
+      "scalingFactor": 3.62
+    },
+    "peakThroughput": {
+      "singleProcess": 55800000,
+      "multiCore": 202014000,
+      "improvementPercent": 262
+    },
+    "avgLatency": {
+      "singleProcess": 10.9,
+      "multiCore": 5.31,
+      "improvementPercent": 51.3
+    },
+    "successRate": {
+      "singleProcess": 100,
+      "multiCore": 100
+    }
+  }
+}
