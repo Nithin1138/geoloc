@@ -1,0 +1,3 @@
+[deploy]
+healthcheck_path = "/health"
+healthcheck_timeout = "300s"
