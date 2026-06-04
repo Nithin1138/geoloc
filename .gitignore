@@ -11,4 +11,5 @@ pids
 
 # MaxMind Databases
 src/data/
+data/
 *.mmdb
