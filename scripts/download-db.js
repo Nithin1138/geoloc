@@ -30,7 +30,7 @@ try {
 } catch (e) {}
 
 const LICENSE_KEY = process.env.MAXMIND_LICENSE_KEY;
-const DATA_DIR = path.join(__dirname, "..", "src", "data");
+const DATA_DIR = path.join(__dirname, "..", "data");
 
 const DATABASES = [
   { edition: "GeoLite2-City",    filename: "GeoLite2-City.mmdb" },

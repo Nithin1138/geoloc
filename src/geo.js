@@ -17,7 +17,7 @@ const maxmind = require("maxmind");
 const path = require("path");
 const fs = require("fs");
 
-const DB_DIR = path.join(__dirname, "data");
+const DB_DIR = path.join(__dirname, "..", "data");
 const CITY_DB_PATH = path.join(DB_DIR, "GeoLite2-City.mmdb");
 const ASN_DB_PATH = path.join(DB_DIR, "GeoLite2-ASN.mmdb");
 
