@@ -54,8 +54,13 @@ Steps:
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 async function downloadDB({ edition, filename }) {
-  const url = `https://download.maxmind.com/app/geoip_download?edition_id=${edition}&license_key=${LICENSE_KEY}&suffix=tar.gz`;
   const dest = path.join(DATA_DIR, filename);
+  if (fs.existsSync(dest)) {
+    console.log(`   ✅ ${filename} already exists (skipping download)`);
+    return;
+  }
+
+  const url = `https://download.maxmind.com/app/geoip_download?edition_id=${edition}&license_key=${LICENSE_KEY}&suffix=tar.gz`;
   const tmpTar = path.join(DATA_DIR, `${edition}.tar.gz`);
 
   console.log(`\n⬇️  Downloading ${edition}...`);
